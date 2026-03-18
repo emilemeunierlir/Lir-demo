@@ -543,7 +543,7 @@ body {
 </div>
 
 <!-- ══ LIR PANEL ══ -->
-<div class="lir-panel" id="lir-panel">
+<div class="lir-panel open" id="lir-panel">
 
   <!-- Always-visible header -->
   <div class="panel-header">
@@ -816,7 +816,7 @@ function renderSections() {
 // ══════════════════════════════════════
 //  PANEL TOGGLE  (2-state: closed ↔ open)
 // ══════════════════════════════════════
-let panelOpen = false;
+let panelOpen = true;
 function togglePanel() {
   panelOpen = !panelOpen;
   document.getElementById('lir-panel').classList.toggle('open', panelOpen);
@@ -856,8 +856,8 @@ function formatDate(d) {
 }
 const now = new Date();
 document.getElementById('panel-date').textContent = formatDate(now);
-setInterval(()=>{document.getElementById('mac-clock').textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});},1000);
-document.getElementById('mac-clock').textContent = now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+const _clock = document.getElementById('mac-clock');
+if(_clock) { _clock.textContent = now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); setInterval(()=>{_clock.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});},1000); }
 
 // ══════════════════════════════════════
 //  OPERATOR MODAL
@@ -946,7 +946,6 @@ function renderScada(){
 // ── Init ──
 renderSections();
 updateCollapsedAlertDot();
-togglePanel(); // start with panel open
 </script>
 </body>
 </html>
