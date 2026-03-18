@@ -90,7 +90,7 @@ body {
 ════════════════════════════════════ */
 .lir-panel {
   position: fixed;
-  top: 46px; right: 28px;
+  top: 46px; left: calc(100vw - 378px);
   z-index: 300;
   width: 500px;
   background: rgba(36,45,59,0.93);
@@ -110,7 +110,10 @@ body {
   justify-content: space-between;
   padding: 10px 25px 10px 10px;
   gap: 12px;
+  cursor: grab;
+  user-select: none;
 }
+.panel-header.dragging { cursor: grabbing; }
 .panel-date {
   font-family: var(--font);
   font-weight: 300;
@@ -942,6 +945,47 @@ function renderScada(){
   h+=`<div class="statusbar"><div class="statusbar-item"><span class="status-led led-green"></span>PLC Online</div><div class="statusbar-item"><span class="status-led led-green"></span>SCADA Link</div><div class="statusbar-item"><span class="status-led led-amber"></span>Biology: NO DATA</div><div class="statusbar-item">Alarms: 3 active</div></div>`;
   document.getElementById('scada').innerHTML = h;
 }
+
+// ══════════════════════════════════════
+//  DRAG TO MOVE
+// ══════════════════════════════════════
+(function() {
+  const panel  = document.getElementById('lir-panel');
+  const handle = panel.querySelector('.panel-header');
+  const SCALE  = 0.70;
+  let dragging = false, startX, startY, startL, startT;
+
+  handle.addEventListener('mousedown', function(e) {
+    if (e.target.tagName === 'BUTTON') return;
+    dragging = true;
+    // Get current left/top in px (resolve from computed style)
+    const rect = panel.getBoundingClientRect();
+    startL = rect.left;
+    startT = rect.top;
+    // Switch from any calc/right to explicit left/top
+    panel.style.right  = 'auto';
+    panel.style.left   = startL + 'px';
+    panel.style.top    = startT + 'px';
+    startX = e.clientX;
+    startY = e.clientY;
+    handle.classList.add('dragging');
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    panel.style.left = (startL + dx) + 'px';
+    panel.style.top  = (startT + dy) + 'px';
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (!dragging) return;
+    dragging = false;
+    handle.classList.remove('dragging');
+  });
+})();
 
 // ── Init ──
 renderSections();
