@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lir — Operator Mobile</title>
+<style>
+/* ── Test Calibre ── */
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-Thin.otf') format('opentype'); font-weight:100; font-style:normal; }
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-Light.otf') format('opentype'); font-weight:300; font-style:normal; }
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-Regular.otf') format('opentype'); font-weight:400; font-style:normal; }
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-Medium.otf') format('opentype'); font-weight:500; font-style:normal; }
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-Semibold.otf') format('opentype'); font-weight:600; font-style:normal; }
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-Bold.otf') format('opentype'); font-weight:700; font-style:normal; }
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --font: 'Test Calibre', system-ui, sans-serif;
+  --bg:   #dee3fb;
+  --text: #524d5a;
+  --white: #ffffff;
+  --nav-bg: rgba(82,77,90,0.54);
+  --urgent-card: rgba(138,86,86,0.60);
+  --suggestion-card: rgba(89,142,188,0.48);
+  --data-card: #9ebadd;
+  --pill-bg: #524d5a;
+  --done-bg: #524d5a;
+  --done-text: #dee3fb;
+}
+
+html, body {
+  height: 100%;
+  background: #1a1a2e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font);
+  font-feature-settings: 'dlig';
+  overflow: hidden;
+}
+
+/* Scale phone to always fit viewport */
+#phone-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* ── Phone shell ── */
+.phone {
+  position: relative;
+  width: 393px;
+  height: 852px;
+  background: var(--bg);
+  border-radius: 56px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* ── iPhone frame overlay (pointer-events:none so it doesn't block clicks) ── */
+.iphone-frame {
+  position: absolute;
+  top: -30px; left: -30px;
+  width: 453px; height: 912px;
+  pointer-events: none;
+  z-index: 100;
+}
+.iphone-frame img {
+  width: 100%; height: 100%;
+  display: block;
+  object-fit: cover;
+  max-width: none;
+}
+
+/* ── Screens ── */
+.screen {
+  position: absolute;
+  inset: 0;
+  display: none;
+}
+.screen.active { display: block; }
+
+/* ── Bottom nav ── */
+.bottom-nav {
+  position: absolute;
+  left: 9px;
+  top: 752px;
+  width: 375px;
+  height: 90px;
+  background: var(--nav-bg);
+  border-radius: 77px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  z-index: 50;
+}
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  width: 90px;
+  gap: 6px;
+}
+.nav-item img {
+  display: block;
+}
+.nav-item span {
+  font-family: var(--font);
+  font-weight: 300;
+  font-size: 20px;
+  color: var(--white);
+  letter-spacing: -0.6px;
+  line-height: 0.92;
+  font-feature-settings: 'dlig';
+  white-space: nowrap;
+}
+.nav-icon-copilot { width: 28px; height: 28px; margin-left: 0; }
+.nav-icon-schedule { width: 21px; height: 23.333px; }
+.nav-icon-plant    { width: 37.8px; height: 26.2px; }
+
+/* ── Shared: section heading ── */
+.section-title {
+  position: absolute;
+  left: 36px;
+  font-size: 36px;
+  letter-spacing: -1.08px;
+  line-height: 1.1;
+  color: var(--text);
+  font-feature-settings: 'dlig';
+}
+.section-title .light { font-weight: 300; }
+.section-title .medium { font-weight: 500; }
+
+/* ── Shared: small task row card ── */
+.task-row {
+  position: absolute;
+  left: 36px;
+  width: 320px;
+  height: 57px;
+  background: var(--bg);
+  border: 1px solid var(--text);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  padding: 10px 7px 10px 10px;
+  gap: 9px;
+}
+.task-row-avatar {
+  width: 33px; height: 33px;
+  border-radius: 49px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.task-row-avatar img {
+  width: 162.14%; height: 247.72%;
+  object-fit: cover;
+  display: block;
+  margin-left: -31.83%; margin-top: -40.74%;
+  max-width: none;
+}
+.task-row-lir-logo {
+  width: 32px; height: 31px;
+  position: relative;
+  flex-shrink: 0;
+}
+.task-row-lir-logo .knob-bg {
+  position: absolute; inset: 0;
+  transform: rotate(180deg);
+  width: 100%; height: 100%;
+  display: block;
+}
+.task-row-lir-logo .lir-logo {
+  position: absolute;
+  top: 17.75%; right: 29.36%;
+  bottom: 14.75%; left: 35.12%;
+  width: calc(100% - 35.12% - 29.36%);
+  height: calc(100% - 17.75% - 14.75%);
+  display: block;
+}
+.task-row-info {
+  flex: 1;
+  font-size: 15.475px;
+  line-height: 1.1;
+  letter-spacing: -0.4643px;
+  color: var(--text);
+  font-feature-settings: 'dlig';
+}
+.task-row-info .by { font-weight: 300; }
+.task-row-info .name { font-weight: 500; }
+.task-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.task-row-check {
+  width: 25px; height: 24px;
+  display: block;
+}
+.btn-dismiss {
+  border: 1px solid var(--text);
+  border-radius: 22px;
+  padding: 8px 20px;
+  font-family: var(--font);
+  font-weight: 400;
+  font-size: 15.475px;
+  color: var(--text);
+  letter-spacing: -0.4643px;
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  font-feature-settings: 'dlig';
+}
+.btn-done {
+  background: var(--done-bg);
+  border-radius: 22px;
+  padding: 8px 20px;
+  font-family: var(--font);
+  font-weight: 400;
+  font-size: 15.475px;
+  color: var(--done-text);
+  letter-spacing: -0.4643px;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  font-feature-settings: 'dlig';
+}
+
+/* ── Weekly calendar ── */
+.week-bar {
+  position: absolute;
+  left: 44px;
+  display: flex;
+  gap: 0;
+}
+.week-day {
+  width: 46px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.week-day .day-name {
+  font-family: var(--font);
+  font-weight: 300;
+  font-size: 15.475px;
+  color: var(--text);
+  letter-spacing: -0.4643px;
+  line-height: 1.1;
+  text-align: center;
+  font-feature-settings: 'dlig';
+}
+.week-day .day-num {
+  font-family: var(--font);
+  font-weight: 500;
+  font-size: 15.475px;
+  color: var(--text);
+  letter-spacing: -0.4643px;
+  line-height: 1.1;
+  text-align: center;
+  font-feature-settings: 'dlig';
+  margin-top: 2px;
+  width: 26px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 32.5px;
+}
+.week-day.today .day-num {
+  background: var(--pill-bg);
+  color: var(--white);
+}
+
+/* ══════════════════════════
+   SCREEN 1 — CO-PILOT
+══════════════════════════ */
+
+/* Notification banner at top */
+.copilot-notif {
+  position: absolute;
+  top: 78px; left: 36px;
+  width: 320px; height: 57px;
+  background: var(--bg);
+  border: 1px solid var(--text);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  padding: 10px 7px 10px 10px;
+  gap: 9px;
+}
+
+/* Right bubble (John) */
+.bubble-right {
+  position: absolute;
+  top: 350px; left: 181px;
+  width: 188.619px; height: 57px;
+}
+.bubble-right img.bubble-shape {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  transform: rotate(180deg) scaleY(-1);
+  display: block; max-width: none;
+}
+.bubble-right .bubble-name {
+  position: absolute;
+  top: 12px; left: 18px;
+  font-family: var(--font);
+  font-weight: 500;
+  font-size: 17.568px;
+  color: var(--white);
+  letter-spacing: -0.527px;
+  line-height: 1.1;
+  font-feature-settings: 'dlig';
+  white-space: nowrap;
+}
+.bubble-right .bubble-body {
+  position: absolute;
+  top: 33px; left: 18px;
+  font-family: var(--font);
+  font-weight: 400;
+  font-size: 13.58px;
+  color: var(--white);
+  letter-spacing: -0.4074px;
+  line-height: 1.1;
+  font-feature-settings: 'dlig';
+  white-space: nowrap;
+}
+
+/* Left bubble (site system response) */
+.bubble-left {
+  position: absolute;
+  top: 444px; left: 23px;
+  width: 315.619px; height: 80px;
+}
+.bubble-left img.bubble-shape {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  display: block; max-width: none;
+}
+.bubble-left .bubble-alert-icon {
+  position: absolute;
+  top: 7px; left: 18px;
+  width: 26.208px; height: 26.208px;
+}
+.bubble-left .bubble-site {
+  position: absolute;
+  top: 14px; left: 45.82px;
+  font-family: var(--font);
+  font-weight: 500;
+  font-size: 15.166px;
+  color: var(--text);
+  letter-spacing: -0.455px;
+  line-height: 1.1;
+  font-feature-settings: 'dlig';
+}
+.bubble-left .bubble-resolved {
+  position: absolute;
+  top: 12px; right: 20px;
+  font-family: var(--font);
+  font-weight: 500;
+  font-size: 17.568px;
+  color: var(--text);
+  letter-spacing: -0.527px;
+  line-height: 1.1;
+  font-feature-settings: 'dlig';
+  white-space: nowrap;
+}
+.bubble-left .bubble-body {
+  position: absolute;
+  top: 40px; left: 22px;
+  width: 265px;
+  font-family: var(--font);
+  font-weight: 400;
+  font-size: 13.58px;
+  color: var(--text);
+  letter-spacing: -0.4074px;
+  line-height: 1.1;
+  font-feature-settings: 'dlig';
+}
+
+/* Chat input area */
+.chat-input-area {
+  position: absolute;
+  top: 604px; left: 0;
+  width: 393px; height: 258px;
+  background: white;
+  border: 0.9px solid #d9d9d9;
+  border-radius: 14.4px;
+  padding: 14.4px;
+}
+.chat-input-area .placeholder {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 14.4px;
+  color: #b3b3b3;
+  line-height: 1.4;
+}
+
+/* Toolbar icons row */
+.chat-toolbar {
+  position: absolute;
+  top: 556px; left: 9px;
+  width: 364px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.chat-toolbar-left {
+  display: flex;
+  gap: 7.2px;
+  align-items: center;
+}
+.toolbar-icon-btn {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  opacity: 0.6;
+}
+.toolbar-icon-btn svg { display: block; }
+.toolbar-send-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid var(--text);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  opacity: 0.5;
+}
+
+/* ══════════════════════════
+   SCREEN 2 — SCHEDULE
+══════════════════════════ */
+.urgent-card {
+  position: absolute;
+  top: 160px; left: 36px;
+  width: 320px; height: 213px;
+  background: var(--urgent-card);
+  border-radius: 20px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.urgent-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 0;
+}
+.urgent-card-avatar {
+  width: 33px; height: 33px;
+  border-radius: 49px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.urgent-card-avatar img {
+  width: 162.14%; height: 247.72%;
+  display: block;
+  margin-left: -31.83%; margin-top: -40.74%;
+  max-width: none;
+}
+.urgent-card-meta {
+  flex: 1;
+}
+.urgent-card-meta .by {
+  font-weight: 300;
+  font-size: 15.475px;
+  color: var(--text);
+  letter-spacing: -0.4643px;
+  line-height: 1.1;
+}
+.urgent-card-meta .name {
+  font-weight: 500;
+  font-size: 15.475px;
+  color: var(--text);
+  letter-spacing: -0.4643px;
+  line-height: 1.1;
+}
+.urgent-card-date {
+  font-weight: 300;
+  font-size: 15.475px;
+  color: var(--text);
+  letter-spacing: -0.4643px;
+  line-height: 1.1;
+  text-align: right;
+  flex-shrink: 0;
+}
+.urgent-card-title {
+  padding: 0 10px;
+  font-family: var(--font);
+  font-weight: 500;
+  font-size: 25px;
+  color: var(--text);
+  letter-spacing: -0.75px;
+  line-height: 1.1;
+  font-feature-settings: 'dlig';
+  flex: 1;
+}
+.urgent-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  padding: 0 0 2px;
+}
+
+/* ══════════════════════════
+   SCREEN 3 — PLANT OVERVIEW
+══════════════════════════ */
+/* .data-cards-row replaced by .cards-scroll-viewport + .cards-scroll-inner */
+.data-card {
+  background: var(--data-card);
+  border-radius: 20px;
+  padding: 20px;
+  height: 260px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.data-card-floc { width: 239px; }
+.data-card-fi   { width: 192px; }
+.data-card-label {
+  font-family: var(--font);
+  font-weight: 300;
+  font-size: 20px;
+  color: #222b38;
+  letter-spacing: -0.6px;
+  line-height: 1.1;
+  font-feature-settings: 'dlig';
+}
+.data-card-value {
+  font-family: var(--font);
+  font-weight: 300;
+  font-size: 100px;
+  color: #222b38;
+  letter-spacing: -3px;
+  line-height: 1;
+  font-feature-settings: 'dlig';
+  margin-top: auto;
+  text-align: right;
+}
+.data-card-value .unit {
+  font-size: 40px;
+  letter-spacing: -1.2px;
+  vertical-align: baseline;
+}
+.data-card-fi .data-card-value {
+  font-size: 100px;
+  text-align: right;
+}
+
+/* ── Card scroll animations ── */
+
+/* Wrapper clips overflow, sits at absolute position */
+.cards-scroll-viewport {
+  position: absolute;
+  left: 36px; right: 0;
+  overflow: hidden;
+}
+
+/* Inner row: flex, animates translateX */
+.cards-scroll-inner {
+  display: flex;
+  gap: 12px;
+  width: max-content;
+  will-change: transform;
+}
+
+/* Schedule: three 320px cards, palindrome 1→2→3→2→1 */
+@keyframes schedule-slide {
+  0%,   15% { transform: translateX(0); }
+  22%,  38% { transform: translateX(-332px); }
+  45%,  61% { transform: translateX(-664px); }
+  68%,  84% { transform: translateX(-332px); }
+  91%, 100% { transform: translateX(0); }
+}
+
+/* Plant overview: slide 190px to fully reveal Filamentious card */
+@keyframes plant-slide {
+  0%,  28% { transform: translateX(0); }
+  42%, 72% { transform: translateX(-200px); }
+  86%, 100% { transform: translateX(0); }
+}
+
+.cards-scroll-inner.anim-schedule {
+  animation: schedule-slide 18s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+.cards-scroll-inner.anim-plant {
+  animation: plant-slide 9s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+/* Suggestion card (blue, Schedule screen) */
+.suggestion-card {
+  background: var(--suggestion-card);
+  border-radius: 20px;
+  padding: 10px;
+  width: 320px;
+  height: 213px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.suggestion-card-header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 0;
+}
+.suggestion-card-meta { flex: 1; }
+.suggestion-card-meta .by  { font-weight: 300; font-size: 15.475px; color: var(--text); letter-spacing: -0.4643px; line-height: 1.1; }
+.suggestion-card-meta .name { font-weight: 500; font-size: 15.475px; color: var(--text); letter-spacing: -0.4643px; line-height: 1.1; }
+.suggestion-card-date {
+  font-weight: 300; font-size: 15.475px; color: var(--text);
+  letter-spacing: -0.4643px; line-height: 1.1; text-align: right; flex-shrink: 0;
+}
+.suggestion-card-title {
+  padding: 0 10px;
+  font-family: var(--font); font-weight: 500; font-size: 25px;
+  color: var(--text); letter-spacing: -0.75px; line-height: 1.1;
+  font-feature-settings: 'dlig'; flex: 1;
+}
+.suggestion-card-actions {
+  display: flex; align-items: center; justify-content: flex-end;
+  gap: 14px; padding: 0 0 2px;
+}
+.btn-see-why {
+  border: 1px solid var(--text); border-radius: 22px;
+  padding: 8px 20px; font-family: var(--font); font-weight: 400;
+  font-size: 15.475px; color: var(--text); letter-spacing: -0.4643px;
+  background: transparent; cursor: pointer; white-space: nowrap;
+  font-feature-settings: 'dlig';
+}
+.suggestion-card-subtitle {
+  padding: 0 10px;
+  font-family: var(--font);
+  font-weight: 300;
+  font-size: 13px;
+  color: rgba(82,77,90,0.65);
+  letter-spacing: -0.35px;
+  line-height: 1.2;
+  font-feature-settings: 'dlig';
+  margin-top: -6px;
+}
+
+/* ══════════════════════════════════════════════
+   ANIMATED CHAT — Co-pilot screen
+══════════════════════════════════════════════ */
+.chat-feed {
+  position: absolute;
+  top: 148px;
+  left: 0; right: 0;
+  height: 402px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.chat-inner {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 0 18px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.chat-msg {
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.chat-msg.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.chat-msg.from-ai   { align-items: flex-start; }
+.chat-msg.from-user { align-items: flex-end; }
+.msg-sender {
+  font-family: 'Test Calibre', system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: rgba(82,77,90,0.55);
+  margin-bottom: 3px;
+}
+.msg-bubble {
+  font-family: 'Test Calibre', system-ui, sans-serif;
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.45;
+  padding: 10px 14px;
+  max-width: 272px;
+  border-radius: 14px;
+  word-break: break-word;
+}
+.from-ai .msg-bubble {
+  background: rgba(255,255,255,0.82);
+  color: #2d2840;
+  border-bottom-left-radius: 4px;
+}
+.from-user .msg-bubble {
+  background: #171025;
+  color: rgba(255,255,255,0.88);
+  border-bottom-right-radius: 4px;
+}
+/* Typing indicator */
+.typing-indicator {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(255,255,255,0.75);
+  border-radius: 14px;
+  border-bottom-left-radius: 4px;
+}
+.typing-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #7a758a;
+  flex-shrink: 0;
+  animation: typing-bounce 1.2s infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing-bounce {
+  0%, 60%, 100% { transform: translateY(0);   opacity: 0.4; }
+  30%            { transform: translateY(-5px); opacity: 1;   }
+}
+/* Fade-out class applied before loop restart */
+.chat-feed.fading .chat-msg {
+  transition: opacity 0.9s ease;
+  opacity: 0;
+}
+</style>
+</head>
+<body>
+
+<div id="phone-wrapper"><div class="phone" id="phone">
+
+  <!-- ══ SCREEN: CO-PILOT ══ -->
+  <div class="screen screen-copilot active" id="screen-copilot">
+
+    <!-- Notification banner: Lir Labs Copilot -->
+    <div class="copilot-notif">
+      <!-- Lir logo knob -->
+      <div class="task-row-lir-logo">
+        <img class="knob-bg" src="assets/mob-knob-bg.svg" alt="" />
+        <img class="lir-logo" src="assets/mob-lir-logo.svg" alt="" />
+      </div>
+      <div class="task-row-info">
+        <div class="by">Requested by</div>
+        <div class="name">Lir Labs Copilot</div>
+      </div>
+      <div class="task-row-actions">
+        <img class="task-row-check" src="assets/mob-check.svg" alt="" />
+        <button class="btn-dismiss">dismiss</button>
+      </div>
+    </div>
+
+    <!-- Animated chat feed -->
+    <div id="chat-feed" class="chat-feed">
+      <div id="chat-inner" class="chat-inner"></div>
+    </div>
+
+    <!-- Toolbar row above chat input -->
+    <div class="chat-toolbar">
+      <div class="chat-toolbar-left">
+        <button class="toolbar-icon-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </button>
+        <button class="toolbar-icon-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </button>
+        <button class="toolbar-icon-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        </button>
+      </div>
+      <button class="toolbar-send-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Chat input box -->
+    <div class="chat-input-area">
+      <div class="placeholder">How can I help today</div>
+    </div>
+
+  </div><!-- /screen-copilot -->
+
+
+  <!-- ══ SCREEN: SCHEDULE ══ -->
+  <div class="screen screen-schedule" id="screen-schedule">
+
+    <!-- Title -->
+    <div class="section-title" style="top:70px;">
+      <div class="light">Today's</div>
+      <div class="medium">Scheduled tasks</div>
+    </div>
+
+    <!-- Scrolling task cards -->
+    <div class="cards-scroll-viewport" style="top:160px; height:213px;">
+      <div class="cards-scroll-inner anim-schedule">
+
+        <!-- Card 1: Urgent (pink) -->
+        <div class="urgent-card" style="position:relative;top:auto;left:auto;flex-shrink:0;">
+          <div class="urgent-card-header">
+            <div class="urgent-card-avatar">
+              <img src="assets/mob-worker.png" alt="Ethan Russel" />
+            </div>
+            <div class="urgent-card-meta">
+              <div class="by">Requested by</div>
+              <div class="name">Ethan Russel</div>
+            </div>
+            <div class="urgent-card-date">16.03.26</div>
+          </div>
+          <div class="urgent-card-title">urgent: Add Anti-foam to tank 2</div>
+          <div class="urgent-card-actions">
+            <button class="btn-dismiss">dismiss</button>
+            <button class="btn-done">Done</button>
+          </div>
+        </div>
+
+        <!-- Card 2: DO setpoint suggestion -->
+        <div class="suggestion-card">
+          <div class="suggestion-card-header">
+            <div class="task-row-lir-logo">
+              <img class="knob-bg" src="assets/mob-knob-bg.svg" alt="" />
+              <img class="lir-logo" src="assets/mob-lir-logo.svg" alt="" />
+            </div>
+            <div class="suggestion-card-meta">
+              <div class="by">Requested by</div>
+              <div class="name">Lir Labs Copilot</div>
+            </div>
+            <div class="suggestion-card-date">16.03.26</div>
+          </div>
+          <div class="suggestion-card-title">DO setpoint: 1.9 → 2.3 mg/L (zones 3–4)</div>
+          <div class="suggestion-card-subtitle">+€12/day energy vs €2,400 avoided foam event.</div>
+          <div class="suggestion-card-actions">
+            <button class="btn-see-why">See why</button>
+            <button class="btn-done">Done</button>
+          </div>
+        </div>
+
+        <!-- Card 3: PAC dosing suggestion -->
+        <div class="suggestion-card">
+          <div class="suggestion-card-header">
+            <div class="task-row-lir-logo">
+              <img class="knob-bg" src="assets/mob-knob-bg.svg" alt="" />
+              <img class="lir-logo" src="assets/mob-lir-logo.svg" alt="" />
+            </div>
+            <div class="suggestion-card-meta">
+              <div class="by">Requested by</div>
+              <div class="name">Lir Labs Copilot</div>
+            </div>
+            <div class="suggestion-card-date">16.03.26</div>
+          </div>
+          <div class="suggestion-card-title">PAC dosing: 6.0 → 8.5 g/L</div>
+          <div class="suggestion-card-subtitle">FI stabilisation within 18h.</div>
+          <div class="suggestion-card-actions">
+            <button class="btn-see-why">See why</button>
+            <button class="btn-done">Done</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- This week heading -->
+    <div class="section-title" style="top:459px;">
+      <div class="light">This week</div>
+    </div>
+
+    <!-- Week calendar -->
+    <div class="week-bar" style="top:508px;">
+      <div class="week-day">
+        <span class="day-name">Sun</span>
+        <span class="day-num">15</span>
+      </div>
+      <div class="week-day">
+        <span class="day-name">Mon</span>
+        <span class="day-num">16</span>
+      </div>
+      <div class="week-day">
+        <span class="day-name">Tue</span>
+        <span class="day-num">17</span>
+      </div>
+      <div class="week-day today">
+        <span class="day-name">Wed</span>
+        <span class="day-num">18</span>
+      </div>
+      <div class="week-day">
+        <span class="day-name">Thu</span>
+        <span class="day-num">19</span>
+      </div>
+      <div class="week-day">
+        <span class="day-name">Fri</span>
+        <span class="day-num">20</span>
+      </div>
+      <div class="week-day">
+        <span class="day-name">Sat</span>
+        <span class="day-num">21</span>
+      </div>
+    </div>
+
+    <!-- Task rows -->
+    <div class="task-row" style="top:578px;">
+      <div class="task-row-avatar">
+        <img src="assets/mob-worker.png" alt="" />
+      </div>
+      <div class="task-row-info">
+        <div class="by">Requested by</div>
+        <div class="name">Ethan Russel</div>
+      </div>
+      <div class="task-row-actions">
+        <img class="task-row-check" src="assets/mob-check.svg" alt="" />
+        <button class="btn-dismiss">dismiss</button>
+      </div>
+    </div>
+
+    <div class="task-row" style="top:644px;">
+      <div class="task-row-lir-logo">
+        <img class="knob-bg" src="assets/mob-knob-bg.svg" alt="" />
+        <img class="lir-logo" src="assets/mob-lir-logo.svg" alt="" />
+      </div>
+      <div class="task-row-info">
+        <div class="by">Requested by</div>
+        <div class="name">Lir Labs Copilot</div>
+      </div>
+      <div class="task-row-actions">
+        <img class="task-row-check" src="assets/mob-check.svg" alt="" />
+        <button class="btn-dismiss">dismiss</button>
+      </div>
+    </div>
+
+    <div class="task-row" style="top:710px;">
+      <div class="task-row-lir-logo">
+        <img class="knob-bg" src="assets/mob-knob-bg.svg" alt="" />
+        <img class="lir-logo" src="assets/mob-lir-logo.svg" alt="" />
+      </div>
+      <div class="task-row-info">
+        <div class="by">Requested by</div>
+        <div class="name">Lir Labs Copilot</div>
+      </div>
+      <div class="task-row-actions">
+        <img class="task-row-check" src="assets/mob-check.svg" alt="" />
+        <button class="btn-dismiss">dismiss</button>
+      </div>
+    </div>
+
+  </div><!-- /screen-schedule -->
+
+
+  <!-- ══ SCREEN: PLANT OVERVIEW (my plant) ══ -->
+  <div class="screen screen-plant" id="screen-plant">
+
+    <!-- Title -->
+    <div class="section-title" style="top:70px;">
+      <div class="light">Plant</div>
+      <div class="medium">Overview</div>
+    </div>
+
+    <!-- Data cards (animated horizontal scroll) -->
+    <div class="cards-scroll-viewport" style="top:161px; height:260px;">
+      <div class="cards-scroll-inner anim-plant" style="gap:15px;">
+        <!-- Floc size distribution -->
+        <div class="data-card data-card-floc">
+          <div class="data-card-label">Floc size distribution</div>
+          <div class="data-card-value">120 <span class="unit">μm</span></div>
+        </div>
+        <!-- Filamentious index -->
+        <div class="data-card data-card-fi">
+          <div class="data-card-label">Filamentious<br>index</div>
+          <div class="data-card-value">44.2</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly Tasks heading -->
+    <div class="section-title" style="top:459px;">
+      <div class="light">Weekly Tasks</div>
+    </div>
+
+    <!-- Week calendar -->
+    <div class="week-bar" style="top:508px;">
+      <div class="week-day">
+        <span class="day-name">Sun</span>
+        <span class="day-num">15</span>
+      </div>
+      <div class="week-day">
+        <span class="day-name">Mon</span>
+        <span class="day-num">16</span>
+      </div>
+      <div class="week-day">
+        <span class="day-name">Tue</span>
+        <span class="day-num">17</span>
+      </div>
+      <div class="week-day today">
+        <span class="day-name">Wed</span>
+        <span class="day-num">18</span>
+      </div>
+      <div class="week-day">
+        <span class="day-name">Thu</span>
+        <span class="day-num">19</span>
+      </div>
+      <div class="week-day">
+        <span class="day-name">Fri</span>
+        <span class="day-num">20</span>
+      </div>
+      <div class="week-day">
+        <span class="day-name">Sat</span>
+        <span class="day-num">21</span>
+      </div>
+    </div>
+
+    <!-- Task rows -->
+    <div class="task-row" style="top:578px;">
+      <div class="task-row-avatar">
+        <img src="assets/mob-worker.png" alt="" />
+      </div>
+      <div class="task-row-info">
+        <div class="by">Requested by</div>
+        <div class="name">Ethan Russel</div>
+      </div>
+      <div class="task-row-actions">
+        <img class="task-row-check" src="assets/mob-check.svg" alt="" />
+        <button class="btn-dismiss">dismiss</button>
+      </div>
+    </div>
+
+    <div class="task-row" style="top:644px;">
+      <div class="task-row-lir-logo">
+        <img class="knob-bg" src="assets/mob-knob-bg.svg" alt="" />
+        <img class="lir-logo" src="assets/mob-lir-logo.svg" alt="" />
+      </div>
+      <div class="task-row-info">
+        <div class="by">Requested by</div>
+        <div class="name">Lir Labs Copilot</div>
+      </div>
+      <div class="task-row-actions">
+        <img class="task-row-check" src="assets/mob-check.svg" alt="" />
+        <button class="btn-dismiss">dismiss</button>
+      </div>
+    </div>
+
+    <div class="task-row" style="top:710px;">
+      <div class="task-row-lir-logo">
+        <img class="knob-bg" src="assets/mob-knob-bg.svg" alt="" />
+        <img class="lir-logo" src="assets/mob-lir-logo.svg" alt="" />
+      </div>
+      <div class="task-row-info">
+        <div class="by">Requested by</div>
+        <div class="name">Lir Labs Copilot</div>
+      </div>
+      <div class="task-row-actions">
+        <img class="task-row-check" src="assets/mob-check.svg" alt="" />
+        <button class="btn-dismiss">dismiss</button>
+      </div>
+    </div>
+
+  </div><!-- /screen-plant -->
+
+
+  <!-- ══ BOTTOM NAV (shared across all screens) ══ -->
+  <div class="bottom-nav">
+    <div class="nav-item" id="nav-copilot" onclick="showScreen('copilot')">
+      <img class="nav-icon-copilot" src="assets/mob-copilot-icon.svg" alt="" />
+      <span>Copilot</span>
+    </div>
+    <div class="nav-item" id="nav-schedule" onclick="showScreen('schedule')">
+      <img class="nav-icon-schedule" src="assets/mob-schedule-icon.svg" alt="" />
+      <span>schedule</span>
+    </div>
+    <div class="nav-item" id="nav-plant" onclick="showScreen('plant')">
+      <img class="nav-icon-plant" src="assets/mob-plant-icon.svg" alt="" />
+      <span>my plant</span>
+    </div>
+  </div>
+
+  <!-- iPhone frame on top -->
+  <div class="iphone-frame">
+    <img src="assets/mob-iphone-frame.png" alt="" />
+  </div>
+
+</div></div><!-- /phone /phone-wrapper -->
+
+<script>
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+}
+
+// Scale phone to always fit viewport
+function fitPhone() {
+  const phone = document.getElementById('phone');
+  const scaleX = window.innerWidth  / 393;
+  const scaleY = window.innerHeight / 852;
+  const scale  = Math.min(scaleX, scaleY, 1); // never upscale
+  phone.style.transform = `scale(${scale})`;
+  phone.style.transformOrigin = 'center center';
+}
+fitPhone();
+window.addEventListener('resize', fitPhone);
+
+// ── Animated Co-pilot Chat ──
+(function() {
+  var feed  = document.getElementById('chat-feed');
+  var inner = document.getElementById('chat-inner');
+  var typingEl = null;
+
+  var msgs = [
+    { from:'ai',   sender:'Site 1', text:'⚠ Foam detected in Tank\u202f2 — DO dropping to 1.8\u202fmg/L (zone\u202f3). Recommend adding Anti-foam dose.' },
+    { from:'user', sender:'John',   text:'On it. Heading to tank\u202f2 now.' },
+    { from:'ai',   sender:'Site 1', text:'DO setpoint 1.9\u202f→\u202f2.3\u202fmg/L for zones\u202f3–4 also recommended. Monitoring active.' },
+    { from:'user', sender:'John',   text:'I just added the Anti-foam.' },
+    { from:'ai',   sender:'Site 1', text:'✓ Task resolved. I\'ll keep an eye on the system to make sure it stabilises.' },
+  ];
+
+  function showTyping() {
+    clearTyping();
+    typingEl = document.createElement('div');
+    typingEl.className = 'chat-msg from-ai';
+    typingEl.innerHTML = '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+    inner.appendChild(typingEl);
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() { if (typingEl) typingEl.classList.add('visible'); });
+    });
+  }
+
+  function clearTyping() {
+    if (typingEl) { typingEl.remove(); typingEl = null; }
+  }
+
+  function addMsg(m) {
+    clearTyping();
+    var el = document.createElement('div');
+    el.className = 'chat-msg from-' + m.from;
+    el.innerHTML = '<div class="msg-sender">' + m.sender + '</div><div class="msg-bubble">' + m.text + '</div>';
+    inner.appendChild(el);
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() { el.classList.add('visible'); });
+    });
+  }
+
+  function clearChat() {
+    feed.classList.remove('fading');
+    inner.innerHTML = '';
+    typingEl = null;
+  }
+
+  var SEQUENCE = [
+    [700,   function() { showTyping(); }],
+    [2600,  function() { addMsg(msgs[0]); }],
+    [5200,  function() { addMsg(msgs[1]); }],
+    [7400,  function() { showTyping(); }],
+    [9300,  function() { addMsg(msgs[2]); }],
+    [12200, function() { addMsg(msgs[3]); }],
+    [14000, function() { showTyping(); }],
+    [16100, function() { addMsg(msgs[4]); }],
+    [19800, function() { feed.classList.add('fading'); }],
+  ];
+
+  var LOOP_MS = 21500;
+
+  function runCycle() {
+    clearChat();
+    SEQUENCE.forEach(function(step) { setTimeout(step[1], step[0]); });
+    setTimeout(runCycle, LOOP_MS);
+  }
+
+  runCycle();
+})();
+</script>
+</body>
+</html>

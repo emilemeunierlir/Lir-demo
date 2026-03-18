@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lir — Desktop v4</title>
+<style>
+/* ── Test Calibre — local @font-face ── */
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-Thin.otf') format('opentype'); font-weight:100; font-style:normal; }
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-ThinItalic.otf') format('opentype'); font-weight:100; font-style:italic; }
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-Light.otf') format('opentype'); font-weight:300; font-style:normal; }
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-LightItalic.otf') format('opentype'); font-weight:300; font-style:italic; }
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-Regular.otf') format('opentype'); font-weight:400; font-style:normal; }
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-RegularItalic.otf') format('opentype'); font-weight:400; font-style:italic; }
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-Medium.otf') format('opentype'); font-weight:500; font-style:normal; }
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-MediumItalic.otf') format('opentype'); font-weight:500; font-style:italic; }
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-Semibold.otf') format('opentype'); font-weight:600; font-style:normal; }
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-SemiboldItalic.otf') format('opentype'); font-weight:600; font-style:italic; }
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-Bold.otf') format('opentype'); font-weight:700; font-style:normal; }
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-BoldItalic.otf') format('opentype'); font-weight:700; font-style:italic; }
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-Black.otf') format('opentype'); font-weight:900; font-style:normal; }
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-BlackItalic.otf') format('opentype'); font-weight:900; font-style:italic; }
+
+/* ── Reset ── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+/* ── Design tokens — exact from Figma NpBW6ApC26ANX8vgjNrFPH ── */
+:root {
+  /* Panel */
+  --panel-bg:        #242d3b;            /* rgba(36,45,59,0.93) solid equiv */
+  /* Card backgrounds */
+  --card-alert:      rgba(255,148,148,0.48);
+  --card-suggestion: rgba(89,142,188,0.48);
+  --card-overview:   rgba(134,134,134,0.50);
+  /* Status dots */
+  --dot-alert:       #fad697;            /* amber */
+  --dot-stable:      #59b7cc;            /* teal-blue */
+  /* Typography */
+  --text-hi:         #dee3fb;            /* all panel text */
+  --text-mid:        rgba(222,227,251,0.60);
+  --text-lo:         rgba(222,227,251,0.35);
+  /* Separator */
+  --sep:             rgba(222,227,251,0.18);
+  /* Buttons */
+  --btn-outline-border: #dee3fb;
+  --btn-outline-text:   #dee3fb;
+  --btn-filled-bg:      #dee3fb;
+  --btn-filled-text:    #524d5a;
+  /* Alert value colour */
+  --val-alert:       #fad697;
+  /* Radii */
+  --card-radius:     17px;
+  --panel-radius:    36px;
+  --font: 'Test Calibre', system-ui, sans-serif;
+}
+
+/* ── macOS desktop — Figma SCADA example ── */
+body {
+  font-family: var(--font);
+  background: url('assets/scada-example.png') center center / cover no-repeat fixed;
+  min-height: 100vh;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ── SCADA window ── */
+.scada-window {
+  position: fixed;
+  /* Figma inset: top 7.54%, right 8.33%, bottom 7.54%, left 10.38% of 3024×1964 canvas */
+  top: 7.54vh; right: 8.33vw; bottom: 7.54vh; left: 10.38vw;
+  border-radius: 26px;
+  overflow: hidden;
+  box-shadow: 0 0 0 0.5px rgba(0,0,0,0.23), 0 16px 48px 0 rgba(0,0,0,0.35);
+  z-index: 10;
+  pointer-events: none;
+}
+.scada-window img {
+  position: absolute;
+  top: 0;
+  left: -13%;
+  width: 113%;
+  height: 100%;
+  object-fit: fill;
+  max-width: none;
+  display: block;
+}
+
+/* ════════════════════════════════════
+   LIR PANEL
+════════════════════════════════════ */
+.lir-panel {
+  position: fixed;
+  top: 46px; left: 28px;
+  z-index: 300;
+  width: 500px;
+  background: rgba(36,45,59,0.93);
+  border-radius: var(--panel-radius);
+  overflow: hidden;
+  /* Scale to match Figma Positioning example (FOR SCALE):
+     Figma canvas = MacBook Pro 14" @2x (3024×1964px).
+     Panel width = 720px → 360pt logical → ×0.70 = 350px in our ~1200px viewport */
+  transform: scale(0.70);
+  transform-origin: top left;
+}
+
+/* ── Header (always visible) ── */
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 25px 10px 10px;
+  gap: 12px;
+}
+.panel-date {
+  font-family: var(--font);
+  font-weight: 300;
+  font-size: 15px;
+  color: var(--text-hi);
+  letter-spacing: -.03em;
+  white-space: nowrap;
+  font-feature-settings: 'dlig';
+}
+
+/* ── Toggle pill (Figma: rgba(117,117,117,0.10), w=120px, rounded-39px) ── */
+.toggle-pill {
+  display: inline-flex;
+  align-items: center;
+  width: 120px; height: 55px;
+  background: rgba(117,117,117,0.10);
+  border-radius: 100px;
+  padding: 6px;
+  cursor: pointer;
+  transition: background .2s;
+  position: relative;
+  flex-shrink: 0;
+}
+.toggle-pill:hover { background: rgba(117,117,117,0.18); }
+.toggle-knob {
+  width: 48px; height: 47px;
+  position: relative;
+  flex-shrink: 0;
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.toggle-pill.open .toggle-knob {
+  transform: translateX(59px);
+}
+
+/* ── Panel collapsed body (Frame 258 — section names only) ── */
+.panel-collapsed-body {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height .35s cubic-bezier(.4,0,.2,1);
+}
+.lir-panel.collapsed .panel-collapsed-body {
+  max-height: 260px;
+}
+.collapsed-sections {
+  padding: 4px 30px 22px;
+}
+.collapsed-section-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+.collapsed-section-name {
+  font-family: var(--font);
+  font-weight: 300;
+  font-size: 35px;
+  color: var(--text-hi);
+  letter-spacing: -.025em;
+  line-height: 1.1;
+}
+.collapsed-alert-dot {
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  background: var(--dot-alert);
+  flex-shrink: 0;
+  display: none; /* shown by JS when alerts exist */
+}
+
+/* ── Panel body (slides open) ── */
+.panel-body {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height .4s cubic-bezier(.4,0,.2,1);
+}
+.lir-panel.open .panel-body {
+  max-height: calc(100vh + 156px);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.panel-body::-webkit-scrollbar { display:none; }
+.panel-body-inner { padding: 12px 30px 32px; font-feature-settings: 'dlig'; }
+
+/* ── Section headings ── */
+.section { margin-bottom: 4px; }
+.section-heading {
+  font-family: var(--font);
+  font-weight: 300;
+  font-size: 35px;
+  color: var(--text-hi);
+  letter-spacing: -.025em;
+  line-height: 1.1;
+  padding: 14px 0 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  user-select: none;
+}
+/* chevron indicator — pushed to the right */
+.section-heading::after {
+  content: '';
+  display: block;
+  width: 10px; height: 10px;
+  border-right: 1.5px solid var(--text-hi);
+  border-bottom: 1.5px solid var(--text-hi);
+  transform: rotate(45deg);
+  opacity: 0.55;
+  flex-shrink: 0;
+  margin-top: -4px;
+  margin-left: auto;
+  transition: transform .25s ease, opacity .25s ease;
+}
+/* alert dot on collapsed Alerts heading */
+.section-alert-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--dot-alert);
+  flex-shrink: 0;
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity .3s ease, transform .35s cubic-bezier(.34,1.56,.64,1);
+}
+.section-alert-dot.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+.section.collapsed .section-heading::after {
+  transform: rotate(-135deg);
+  margin-top: 4px;
+}
+/* section cards accordion */
+.section-cards {
+  overflow: hidden;
+  max-height: 2000px;
+  transition: max-height .35s cubic-bezier(.4,0,.2,1);
+}
+.section.collapsed .section-cards {
+  max-height: 0;
+}
+
+/* ── Empty state ── */
+.empty-state {
+  font-family: var(--font);
+  font-weight: 300;
+  font-size: 12px;
+  color: var(--text-lo);
+  padding: 4px 2px 12px;
+  letter-spacing: -.01em;
+}
+
+/* ════════════════════════════════════
+   PLANT CARD SYSTEM
+════════════════════════════════════ */
+.plant-card {
+  border-radius: var(--card-radius);
+  margin-bottom: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: filter .15s;
+}
+.plant-card.is-hovered { filter: brightness(1.07); }
+.plant-card.alert-type      { background: var(--card-alert); }
+.plant-card.suggestion-type { background: var(--card-suggestion); }
+.plant-card.overview-type   { background: var(--card-overview); }
+
+/* ── Collapsed state ── */
+.card-meta {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 15px 15px 0;
+}
+/* Overview cards have no title below meta — restore symmetric padding */
+.plant-card.overview-type .card-meta {
+  padding-bottom: 15px;
+}
+.card-plant-name {
+  font-size: 20px; font-weight: 300;
+  color: var(--text-hi);
+  letter-spacing: -.03em;
+}
+.card-status {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 20px; font-weight: 300;
+  color: var(--text-hi);
+  letter-spacing: -.03em;
+}
+.status-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink:0;
+}
+.status-dot.unstable { background: var(--dot-alert); }
+.status-dot.stable   { background: var(--dot-stable); }
+
+.card-title {
+  font-size: 28px; font-weight: 500;
+  color: var(--text-hi);
+  letter-spacing: -.025em;
+  line-height: 1.2;
+  padding: 8px 15px 15px;
+}
+
+/* ── Hovered state (separator + operator row) ── */
+.card-separator {
+  height: 1px;
+  background: var(--sep);
+  margin: 0 15px;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height .45s cubic-bezier(.4,0,.2,1), opacity .4s ease;
+  overflow: hidden;
+}
+.card-operator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 15px;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height .5s cubic-bezier(.4,0,.2,1), opacity .45s ease, padding .45s cubic-bezier(.4,0,.2,1);
+}
+.op-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(255,255,255,0.14);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink:0;
+}
+.op-name {
+  font-size: 20px; font-weight: 300;
+  color: var(--text-hi);
+  letter-spacing: -.03em;
+  flex: 1;
+}
+.op-actions { display:flex; gap:8px; flex-shrink:0; }
+
+/* Assign task: ghost border */
+.btn-assign {
+  height: 34px;
+  padding: 0 18px;
+  border-radius: 100px;
+  border: 1px solid var(--btn-outline-border);
+  background: transparent;
+  color: var(--btn-outline-text);
+  font-family: var(--font); font-size: 17px; font-weight: 400;
+  cursor: pointer; white-space: nowrap;
+  transition: background .15s;
+  display: flex; align-items: center;
+}
+.btn-assign:hover { background: rgba(255,255,255,.07); }
+
+/* Contact: filled */
+.btn-contact {
+  height: 34px;
+  padding: 0 18px;
+  border-radius: 100px;
+  border: none;
+  background: var(--btn-filled-bg);
+  color: var(--btn-filled-text);
+  font-family: var(--font); font-size: 17px; font-weight: 400;
+  cursor: pointer; white-space: nowrap;
+  transition: opacity .15s;
+  display: flex; align-items: center;
+}
+.btn-contact:hover { opacity: .88; }
+
+/* ── Open state (charts) ── */
+.card-charts {
+  display: none;
+  padding: 6px 15px 44px;
+}
+
+/* ── Data row: label left + large value + chart right ── */
+.data-row {
+  height: 84px;
+  width: 100%;
+  margin-bottom: 38px;
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+.data-row:last-child { margin-bottom: 0; }
+
+/* Left column: label at top, value at bottom */
+.data-col-left {
+  width: 31%;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-top: 14px;
+}
+.data-label {
+  font-size: 16px; font-weight: 300;
+  color: var(--text-mid);
+  letter-spacing: -.02em;
+  line-height: 1.3;
+}
+.data-value {
+  font-size: 64px; font-weight: 300;
+  color: var(--text-hi);
+  letter-spacing: -.03em;
+  line-height: 1;
+}
+.data-value.alert-val { color: var(--val-alert); }
+.data-value .val-unit {
+  font-size: 26px; font-weight: 300;
+  vertical-align: middle;
+  margin-left: 2px;
+  letter-spacing: -.02em;
+}
+
+/* Right column: chart area */
+.data-col-right {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Chart band (threshold zone) */
+.chart-band {
+  position: absolute;
+  top: 29%; bottom: 30%;
+  left: 0; right: 0;
+  background: rgba(217,217,217,0.37);
+  pointer-events: none;
+}
+
+/* Chart SVG line */
+.chart-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  overflow: visible;
+}
+
+/* Chart baseline */
+.chart-base {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: rgba(222,227,251,0.20);
+}
+
+/* Vertical grid lines */
+.chart-grid {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 1px;
+  background: rgba(222,227,251,0.12);
+}
+
+/* End marker square */
+.chart-marker {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translate(0,-50%);
+  width: 7px; height: 7px;
+}
+.chart-marker.alert-marker { background: var(--val-alert); }
+.chart-marker.default-marker { background: var(--text-hi); outline: 1px solid var(--text-hi); }
+
+/* Floc bars (CSS-only, exact positions from Figma) */
+.floc-bars {
+  position: absolute;
+  inset: 0;
+}
+.floc-bar {
+  position: absolute;
+  bottom: 0;
+  background: rgba(217,217,217,0.37);
+  border-radius: 1.5px 1.5px 0 0;
+}
+
+/* ── Hover (0.5 s delay via JS) triggers operator row ── */
+.plant-card.is-hovered .card-separator,
+.plant-card.is-open .card-separator {
+  max-height: 1px;
+  opacity: 1;
+}
+.plant-card.is-hovered .card-operator,
+.plant-card.is-open .card-operator {
+  max-height: 80px;
+  opacity: 1;
+  padding: 14px 15px;
+}
+.plant-card.is-open .card-charts { display: block; }
+
+/* Overview: no title — add symmetric bottom padding so text is vertically centred in the pill */
+.plant-card.overview-type .card-title { display:none; }
+.plant-card.overview-type .card-meta { padding-bottom: 15px; }
+
+/* ════════════════════════════════════
+   SCADA STYLING (from v3)
+════════════════════════════════════ */
+.scada-group{border:2px solid;border-color:#fff #808080 #808080 #fff;background:#d4d0c8;margin-bottom:6px;}
+.scada-group-title{background:linear-gradient(180deg,#0a246a 0%,#3a6ea5 100%);color:#fff;font-size:8px;font-weight:700;padding:2px 6px;font-family:Tahoma,sans-serif;display:flex;justify-content:space-between;align-items:center;}
+.scada-group-body{padding:8px;}
+.scada-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:6px;}
+.scada-metric{border:2px solid;border-color:#808080 #fff #fff #808080;background:#000;padding:6px 8px;}
+.scada-metric-label{font-size:6px;color:#00ff00;font-family:'DM Mono','Courier New',monospace;text-transform:uppercase;letter-spacing:.08em;opacity:.7;}
+.scada-metric-row{display:flex;align-items:baseline;gap:4px;margin-top:2px;}
+.scada-metric-value{font-size:15px;font-weight:700;color:#00ff00;font-family:'DM Mono','Courier New',monospace;letter-spacing:-.02em;text-shadow:0 0 8px rgba(0,255,0,.4);}
+.scada-metric-unit{font-size:7px;color:#00aa00;font-family:'DM Mono',monospace;}
+.scada-metric-trend{font-size:6px;font-family:'DM Mono',monospace;}
+.smt-up{color:#ff4444;text-shadow:0 0 6px rgba(255,68,68,.4);}
+.smt-dn{color:#44ff44;text-shadow:0 0 6px rgba(68,255,68,.4);}
+.scada-charts{display:grid;grid-template-columns:repeat(2,1fr);gap:4px;}
+.scada-chart-box{border:2px solid;border-color:#808080 #fff #fff #808080;background:#0a0a0a;padding:6px;}
+.scada-chart-label{font-size:6px;color:#888;font-family:Tahoma,sans-serif;margin-bottom:4px;display:flex;justify-content:space-between;}
+.scada-blind{border:2px solid;border-color:#808080 #fff #fff #808080;background:#d4d0c8;margin-top:4px;position:relative;}
+.scada-blind-title{background:#800000;color:#fff;font-size:7px;font-weight:700;padding:2px 6px;font-family:Tahoma,sans-serif;display:flex;align-items:center;gap:4px;}
+.scada-blind-body{padding:8px;font-size:7px;color:#333;font-family:Tahoma,sans-serif;line-height:1.5;}
+.scada-blind-body strong{color:#000;}
+.scada-blind-overlay{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(128,0,0,.06) 6px,rgba(128,0,0,.06) 12px);border:2px dashed #cc0000;}
+.statusbar{background:#ece9d8;border-top:1px solid #fff;padding:2px 8px;display:flex;align-items:center;gap:12px;font-size:7px;font-family:Tahoma,sans-serif;color:#444;}
+.statusbar-item{border:1px solid;border-color:#808080 #fff #fff #808080;padding:1px 6px;background:#d4d0c8;}
+.status-led{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle;}
+.led-green{background:#00cc00;box-shadow:0 0 4px #00cc00;}
+.led-amber{background:#ccaa00;box-shadow:0 0 4px #ccaa00;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:flex;align-items:center;justify-content:center;}
+.modal-box{background:#fff;border-radius:16px;padding:20px;width:520px;max-width:93vw;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.25);font-family:var(--font);}
+.modal-close{position:absolute;top:10px;right:12px;cursor:pointer;font-size:11px;color:#64748b;background:none;border:none;padding:4px 6px;}
+</style>
+</head>
+<body>
+
+
+<!-- ══ SCADA WINDOW ══ -->
+<div class="scada-window">
+  <img src="assets/scada-window.png" alt="SCADA" />
+</div>
+
+<!-- ══ LIR PANEL ══ -->
+<div class="lir-panel" id="lir-panel">
+
+  <!-- Always-visible header -->
+  <div class="panel-header">
+    <div class="toggle-pill" id="toggle-pill" onclick="togglePanel()">
+      <div class="toggle-knob" id="toggle-knob">
+        <!-- knob background: fills container, rotated 180deg per Figma -->
+        <div style="position:absolute;inset:0;transform:rotate(180deg);">
+          <img src="assets/knob-bg.svg" style="display:block;width:100%;height:100%;max-width:none;" />
+        </div>
+        <!-- Lir logo: positioned via wrapper div with inset percentages -->
+        <div style="position:absolute;top:17.75%;right:29.36%;bottom:14.75%;left:35.12%;">
+          <img src="assets/lir-logo.svg" style="display:block;width:100%;height:100%;max-width:none;" />
+        </div>
+      </div>
+    </div>
+    <span class="panel-date" id="panel-date">March 17th - 2026</span>
+  </div>
+
+  <!-- Collapsed body: Frame 258 — section names only -->
+  <div class="panel-collapsed-body" id="panel-collapsed-body">
+    <div class="collapsed-sections">
+      <div class="collapsed-section-row">
+        <span class="collapsed-section-name">Overview</span>
+      </div>
+      <div class="collapsed-section-row">
+        <span class="collapsed-section-name">Alerts</span>
+        <span class="collapsed-alert-dot" id="collapsed-alert-dot"></span>
+      </div>
+      <div class="collapsed-section-row">
+        <span class="collapsed-section-name">Recomendations</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sliding body -->
+  <div class="panel-body" id="panel-body">
+    <div class="panel-body-inner">
+
+      <!-- OVERVIEW -->
+      <div class="section" id="section-overview">
+        <h2 class="section-heading" onclick="toggleSection('section-overview')">Overview</h2>
+        <div class="section-cards"><div id="overview-cards"></div></div>
+      </div>
+
+      <!-- ALERTS -->
+      <div class="section" id="section-alerts">
+        <h2 class="section-heading" onclick="toggleSection('section-alerts')">Alerts<span class="section-alert-dot" id="section-alert-dot"></span></h2>
+        <div class="section-cards"><div id="alerts-cards"></div></div>
+      </div>
+
+      <!-- RECOMMENDATIONS -->
+      <div class="section" id="section-rec">
+        <h2 class="section-heading" onclick="toggleSection('section-rec')">Recomendations</h2>
+        <div class="section-cards"><div id="rec-cards"></div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════
+
+// Oscillating wave generator — matches Figma's jagged chart style
+function wave(N, mean, amp1, freq1, amp2, freq2, noise) {
+  return Array.from({length:N}, (_,i) => ({
+    value: mean
+      + amp1 * Math.sin(i * freq1 + Math.random() * 0.4)
+      + amp2 * Math.sin(i * freq2 + Math.random() * 0.2)
+      + (Math.random() - 0.5) * noise
+  }));
+}
+
+const DATA = {
+  sviAlert:   wave(42, 120, 18, 0.85, 9, 1.8, 11),
+  sviDefault: wave(42,  90, 12, 0.80, 6, 1.7,  7),
+  fiAlert:    wave(42,  50,  7, 0.75, 3, 2.0,  5),
+  fiDefault:  wave(42, 44.2, 1.0, 0.70, 0.4, 1.9, 0.5),
+};
+
+const SITES = [
+  { id:1, name:'Plant 1', type:'alert',      status:'unstable',
+    title:'Add Anti-foam',            svi:120, fi:50,   floc:120, operator:'Operator 1',
+    sviAlert:true, fiAlert:true },
+  { id:2, name:'Plant 2', type:'suggestion', status:'stable',
+    title:'Suggestion: Add Anti-foam', svi:120, fi:44.2, floc:120, operator:'Operator 1',
+    sviAlert:true, fiAlert:false },
+  { id:3, name:'Plant 3', type:'overview',   status:'stable',
+    title:'',                          svi:90,  fi:44.2, floc:120, operator:'Operator 1',
+    sviAlert:false, fiAlert:false },
+  { id:4, name:'Plant 4', type:'overview',   status:'stable',
+    title:'',                          svi:90,  fi:44.2, floc:120, operator:'Operator 1',
+    sviAlert:false, fiAlert:false },
+];
+
+// ══════════════════════════════════════
+//  CHART GENERATORS
+// ══════════════════════════════════════
+
+function lineChartSVG(data, isAlert, W, H, yDomain) {
+  const color  = isAlert ? '#fad697' : '#dee3fb';
+  const opacity = isAlert ? '0.90' : '0.75';
+  const vals = data.map(d => d.value);
+  let mn, mx;
+  if (yDomain) { [mn, mx] = yDomain; }
+  else { mn = Math.min(...vals) * 0.92; mx = Math.max(...vals) * 1.08; }
+  const rn = mx - mn || 1;
+  const xS = i => (i / (data.length - 1)) * W;
+  const yS = v => H - ((v - mn) / rn) * H;
+  const pts = data.map((d, i) => `${xS(i).toFixed(1)},${yS(d.value).toFixed(1)}`).join(' ');
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="display:block;width:100%;height:100%">
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-opacity="${opacity}" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+// Floc bars — exact positions extracted from Figma (% inset from container edges)
+// Each bar: [topPct, rightPct, leftPct] → height = (1-topPct)*H, positioned by leftPct/rightPct
+function flocBarsHTML() {
+  // [top%, gap from right side%, gap from left side%] of container
+  // Container starts at 31% of row = chart area
+  const bars = [
+    [92.38, 57.82, 37.24],
+    [81.90, 49.83, 45.24],
+    [61.90, 41.84, 53.23],
+    [37.14, 33.84, 61.22],
+    [52.38, 25.68, 69.39],
+    [61.90, 18.03, 77.04],
+    [37.14, 10.03, 85.03],
+    [52.38,  1.87, 93.20],
+  ];
+  return bars.map(([top, right, left]) =>
+    `<div class="floc-bar" style="top:${top}%;right:${right}%;left:${left}%;"></div>`
+  ).join('');
+}
+
+// ══════════════════════════════════════
+//  CARD BUILDER
+// ══════════════════════════════════════
+function buildDataRow(label, value, unit, isAlert, chartData, yDomain) {
+  const valClass = isAlert ? 'alert-val' : '';
+  const markerClass = isAlert ? 'alert-marker' : 'default-marker';
+  const chartH = 84; // px
+  const chartW = 300; // approximate, SVG scales
+
+  const unitHTML = unit ? `<span class="val-unit">${unit}</span>` : '';
+
+  return `
+    <div class="data-row">
+      <div class="data-col-left">
+        <span class="data-label">${label}</span>
+        <span class="data-value ${valClass}">${value}${unitHTML}</span>
+      </div>
+      <div class="data-col-right">
+        <div class="chart-band"></div>
+        <div class="chart-grid" style="left:47%"></div>
+        <div class="chart-grid" style="left:65%"></div>
+        <div class="chart-grid" style="left:82%"></div>
+        <div class="chart-svg">${lineChartSVG(chartData, isAlert, chartW, chartH, yDomain)}</div>
+        <div class="chart-base"></div>
+        <div class="chart-marker ${markerClass}"></div>
+      </div>
+    </div>`;
+}
+
+function buildFlocRow(value, isAlert) {
+  // Floc uses CSS div bars instead of line chart
+  const valClass = isAlert ? 'alert-val' : '';
+  return `
+    <div class="data-row">
+      <div class="data-col-left">
+        <span class="data-label">Floc size<br>distribution</span>
+        <span class="data-value ${valClass}" style="font-size:52px">${value}<span class="val-unit">μm</span></span>
+      </div>
+      <div class="data-col-right">
+        <div class="floc-bars">${flocBarsHTML()}</div>
+        <div class="chart-base"></div>
+      </div>
+    </div>`;
+}
+
+function buildCard(site) {
+  const dotClass  = site.status === 'unstable' ? 'unstable' : 'stable';
+  const statusLbl = site.status === 'unstable' ? 'Biology\u00a0 unstable' : 'Biology\u00a0 stable';
+  const sviData = site.sviAlert ? DATA.sviAlert : DATA.sviDefault;
+  const fiData  = site.fiAlert  ? DATA.fiAlert  : DATA.fiDefault;
+
+  const div = document.createElement('div');
+  div.className = `plant-card ${site.type}-type`;
+  div.dataset.id = site.id;
+
+  div.innerHTML = `
+    <!-- Collapsed: meta + title -->
+    <div class="card-meta">
+      <span class="card-plant-name">${site.name}</span>
+      <span class="card-status">
+        ${statusLbl}
+        <span class="status-dot ${dotClass}"></span>
+      </span>
+    </div>
+    ${site.title ? `<div class="card-title">${site.title}</div>` : ''}
+
+    <!-- Hovered: separator + operator row -->
+    <div class="card-separator"></div>
+    <div class="card-operator">
+      <div class="op-avatar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(222,227,251,0.65)" stroke-width="1.8">
+          <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+      </div>
+      <span class="op-name">${site.operator}</span>
+      <div class="op-actions">
+        <button class="btn-assign" onclick="event.stopPropagation()">Assign task</button>
+        <button class="btn-contact" onclick="event.stopPropagation();openOpsModal()">Contact</button>
+      </div>
+    </div>
+
+    <!-- Open: charts -->
+    <div class="card-charts">
+      ${buildDataRow('SVI', site.svi, '', site.sviAlert, sviData, null)}
+      ${buildDataRow('Filamentious<br>index', site.fi, '', site.fiAlert, fiData, site.fiAlert ? null : [36, 56])}
+      ${buildFlocRow(site.floc, false)}
+    </div>
+  `;
+
+  div.addEventListener('click', function(e) {
+    if (e.target.tagName === 'BUTTON') return;
+    this.classList.toggle('is-open');
+  });
+
+  // 1-second hover delay
+  let hoverTimer = null;
+  div.addEventListener('mouseenter', function() {
+    hoverTimer = setTimeout(() => this.classList.add('is-hovered'), 500);
+  });
+  div.addEventListener('mouseleave', function() {
+    clearTimeout(hoverTimer);
+    this.classList.remove('is-hovered');
+  });
+
+  return div;
+}
+
+// ══════════════════════════════════════
+//  RENDER SECTIONS
+// ══════════════════════════════════════
+function renderSections() {
+  const alertSites = SITES.filter(s => s.type === 'alert');
+  const recSites   = SITES.filter(s => s.type === 'suggestion');
+  const overSites  = SITES.filter(s => s.type === 'overview');
+
+  const alertsEl = document.getElementById('alerts-cards');
+  const recEl    = document.getElementById('rec-cards');
+  const overEl   = document.getElementById('overview-cards');
+
+  alertSites.length === 0
+    ? alertsEl.innerHTML = `<div class="empty-state">No active alerts</div>`
+    : alertSites.forEach(s => alertsEl.appendChild(buildCard(s)));
+
+  recSites.length === 0
+    ? recEl.innerHTML = `<div class="empty-state">No recommendations</div>`
+    : recSites.forEach(s => recEl.appendChild(buildCard(s)));
+
+  overSites.length === 0
+    ? overEl.innerHTML = `<div class="empty-state">No sites</div>`
+    : overSites.forEach(s => overEl.appendChild(buildCard(s)));
+}
+
+// ══════════════════════════════════════
+//  PANEL TOGGLE  (2-state: closed ↔ open)
+// ══════════════════════════════════════
+let panelOpen = false;
+function togglePanel() {
+  panelOpen = !panelOpen;
+  document.getElementById('lir-panel').classList.toggle('open', panelOpen);
+  document.getElementById('toggle-pill').classList.toggle('open', panelOpen);
+}
+
+// ── Section accordion ──
+function toggleSection(id) {
+  const section = document.getElementById(id);
+  section.classList.toggle('collapsed');
+
+  // Alert dot: appears 500ms after Alerts section collapses, hides instantly on expand
+  if (id === 'section-alerts') {
+    const dot = document.getElementById('section-alert-dot');
+    clearTimeout(section._dotTimer);
+    if (section.classList.contains('collapsed') && SITES.some(s => s.type === 'alert')) {
+      section._dotTimer = setTimeout(() => dot.classList.add('visible'), 500);
+    } else {
+      dot.classList.remove('visible');
+    }
+  }
+}
+
+// Show alert dot in collapsed view when alerts exist
+function updateCollapsedAlertDot() {
+  const hasAlerts = SITES.some(s => s.type === 'alert');
+  document.getElementById('collapsed-alert-dot').style.display = hasAlerts ? 'block' : 'none';
+}
+
+// ══════════════════════════════════════
+//  DATE + CLOCK
+// ══════════════════════════════════════
+function formatDate(d) {
+  const M=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const n=d.getDate(), s=n===1||n===21||n===31?'st':n===2||n===22?'nd':n===3||n===23?'rd':'th';
+  return M[d.getMonth()]+' '+n+s+' - '+d.getFullYear();
+}
+const now = new Date();
+document.getElementById('panel-date').textContent = formatDate(now);
+setInterval(()=>{document.getElementById('mac-clock').textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});},1000);
+document.getElementById('mac-clock').textContent = now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+
+// ══════════════════════════════════════
+//  OPERATOR MODAL
+// ══════════════════════════════════════
+function openOpsModal(){
+  if(document.getElementById('ops-modal'))return;
+  const ts=now.toLocaleDateString()+' '+now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  const m=document.createElement('div');
+  m.id='ops-modal'; m.className='modal-overlay';
+  m.innerHTML=`<div class="modal-box" style="max-width:460px">
+    <button class="modal-close" onclick="document.getElementById('ops-modal').remove()">✕</button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div style="width:34px;height:34px;border-radius:50%;background:#242d3b;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">📲</div>
+      <div><div style="font-size:9px;font-weight:600;color:#1e293b">Operator Notification</div>
+      <div style="font-size:7px;color:#64748b">Sent ${ts} · via Lir platform + SMS</div></div>
+    </div>
+    <div style="background:#f8fafc;border-radius:10px;padding:14px;font-size:8px;line-height:1.7;color:#1e293b;border-left:3px solid #9e5448">
+      <div style="font-weight:700;margin-bottom:8px">ACTION REQUIRED — Biological Treatment Alert</div>
+      <div style="margin-bottom:6px">SVI projected to exceed <strong>150 mL/g</strong> within <strong>48h</strong>. Immediate action required.</div>
+      <div style="margin-bottom:3px;font-weight:600;color:#9e5448">Directive 1 — Increase PAC Dosing</div>
+      <div style="margin-bottom:10px;color:#475569">Raise PAC setpoint <strong>6.0 → 8.5 g/L</strong>. FI stabilisation in 18h.</div>
+      <div style="margin-bottom:3px;font-weight:600;color:#9e5448">Directive 2 — Adjust DO Setpoint</div>
+      <div style="color:#475569">DO target <strong>1.9 → 2.3 mg/L</strong> in aeration zones 3–4.</div>
+    </div>
+    <div style="margin-top:10px;font-size:6px;color:#94a3b8;text-align:right">Generated by Lir · ${ts}</div>
+  </div>`;
+  m.addEventListener('click',e=>{if(e.target===m)m.remove();});
+  document.body.appendChild(m);
+}
+
+// ══════════════════════════════════════
+//  SCADA RENDERER (from v3 — unchanged)
+// ══════════════════════════════════════
+function schrt(d,color,o={}){
+  const{threshold:th=null,thresholdLabel:tl='',height:H=100}=o;
+  const av=d.map(x=>x.value);if(th!==null)av.push(th);
+  const mn=Math.min(...av)*.9,mx=Math.max(...av)*1.1,rn=mx-mn||1;
+  const W=500,p={t:8,r:8,b:16,l:34},pW=W-p.l-p.r,pH=H-p.t-p.b;
+  const tX=i=>p.l+(i/(d.length-1))*pW,tY=v=>p.t+pH-((v-mn)/rn)*pH;
+  let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">`;
+  [.25,.5,.75].forEach(f=>{s+=`<line x1="${p.l}" y1="${p.t+pH*f}" x2="${W-p.r}" y2="${p.t+pH*f}" stroke="#1a3a1a" stroke-width="0.5"/>`;});
+  for(let i=0;i<d.length;i+=Math.floor(d.length/8)){s+=`<line x1="${tX(i)}" y1="${p.t}" x2="${tX(i)}" y2="${p.t+pH}" stroke="#1a3a1a" stroke-width="0.5"/>`;}
+  [0,.5,1].forEach(f=>{s+=`<text x="${p.l-3}" y="${p.t+pH*(1-f)+3}" text-anchor="end" font-size="8" fill="#446644">${(mn+rn*f).toFixed(0)}</text>`;});
+  if(th!==null){s+=`<line x1="${p.l}" y1="${tY(th)}" x2="${W-p.r}" y2="${tY(th)}" stroke="#aa2222" stroke-width="1" stroke-dasharray="4,3"/>`;if(tl)s+=`<text x="${W-p.r}" y="${tY(th)-3}" text-anchor="end" font-size="7" fill="#aa2222">${tl}</text>`;}
+  s+=`<polyline points="${d.map((x,i)=>`${tX(i)},${tY(x.value)}`).join(' ')}" fill="none" stroke="${color}" stroke-width="1.5"/>`;
+  s+=`<defs><filter id="glow"><feGaussianBlur stdDeviation="2" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+  const st=Math.floor(d.length/6);d.forEach((x,i)=>{if(i%st===0)s+=`<text x="${tX(i)}" y="${H-2}" text-anchor="middle" font-size="7" fill="#446644">${x.time}</text>`;});
+  return s+'</svg>';
+}
+
+function renderScada(){
+  function g(h,fn,n){const now=new Date();return Array.from({length:h},(_,i)=>({time:new Date(now.getTime()-(h-i)*36e5).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),value:fn(i)+(Math.random()-.5)*n}));}
+  const doD=g(48,i=>1.8+.4*Math.sin(i/6),.15),nh4D=g(48,i=>2.5+1.2*Math.sin(i/8+1),.3);
+  const pY=280,acc='#e11d48',dark='#1e293b',muted='#64748b',pp='#475569';
+  const LH=(x1,x2,y,w=2,c=pp)=>`<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${c}" stroke-width="${w}" stroke-linecap="square"/>`;
+  const LV=(x,y1,y2,w=2,c=pp)=>`<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="${c}" stroke-width="${w}" stroke-linecap="square"/>`;
+  const AR=(x,y)=>`<polygon points="${x},${y-8} ${x+15},${y} ${x},${y+8}" fill="${dark}"/>`;
+  const AU=(x,y)=>`<polygon points="${x-7},${y} ${x},${y-14} ${x+7},${y}" fill="${pp}"/>`;
+  const pump=(cx,cy,lbl,sub)=>`<circle cx="${cx}" cy="${cy}" r="22" fill="#e2e8f0" stroke="${dark}" stroke-width="1.5"/><polygon points="${cx-9},${cy-7} ${cx+11},${cy} ${cx-9},${cy+7}" fill="${dark}"/><text x="${cx}" y="${cy-30}" text-anchor="middle" font-size="10" font-weight="700" fill="${dark}">${lbl}</text><text x="${cx}" y="${cy+36}" text-anchor="middle" font-size="9" font-weight="700" fill="${acc}">${sub}</text>`;
+  const valve=(cx,cy,lbl,sub)=>`<polygon points="${cx-13},${cy-10} ${cx+13},${cy+10} ${cx+13},${cy-10} ${cx-13},${cy+10}" fill="#93c5fd" stroke="${dark}" stroke-width="1.5"/><circle cx="${cx}" cy="${cy}" r="4" fill="${dark}"/><text x="${cx}" y="${cy-22}" text-anchor="middle" font-size="10" font-weight="700" fill="${dark}">${lbl}</text><text x="${cx}" y="${cy+28}" text-anchor="middle" font-size="9" font-weight="700" fill="${acc}">${sub}</text>`;
+  const gauge=(gx,gy,lbl,val,unit,maxV,pct,gH=120)=>{const gW=22,fillH=Math.max(4,(gH-4)*pct),lvY=gy+gH-2-fillH;return`<text x="${gx+gW/2}" y="${gy-12}" text-anchor="middle" font-size="10" font-weight="700" fill="${dark}">${lbl}</text><rect x="${gx}" y="${gy}" width="${gW}" height="${gH}" fill="#dde3ec" stroke="#94a3b8" stroke-width="1.5"/><rect x="${gx+2}" y="${lvY}" width="${gW-4}" height="${fillH}" fill="#7ab8f5"/><polygon points="${gx-12},${lvY} ${gx-1},${lvY-5} ${gx-1},${lvY+5}" fill="${dark}"/><text x="${gx+gW+4}" y="${lvY+4}" font-size="9" font-weight="700" fill="${acc}">${val}</text><text x="${gx+gW/2}" y="${gy+gH+16}" text-anchor="middle" font-size="9" fill="${muted}">${unit}</text>`;};
+  const tank=(tx,ty,tw,th,lvl,lbl,sub,trend=[])=>{const cx=tx+tw/2,bY=ty+th,fillH=Math.max(4,th*lvl),wY=bY-fillH,outline=`M ${tx},${bY} L ${tx},${ty} L ${tx+tw},${ty} L ${tx+tw},${bY} Z`;let spark='';if(trend.length>1){const tv=trend.map(x=>x.value),tmn=Math.min(...tv),tmx=Math.max(...tv),trn=tmx-tmn||1,pad=10,vpad=7;const tX=i=>tx+pad+(i/(trend.length-1))*(tw-pad*2),tY=v=>wY+vpad+((tmx-v)/trn)*(fillH-vpad*2);spark=`<polyline points="${trend.map((x,i)=>`${tX(i).toFixed(1)},${tY(x.value).toFixed(1)}`).join(' ')}" fill="none" stroke="#1e293b" stroke-width="0.9" opacity="0.65"/>`;}return`<path d="${outline}" fill="#c4ccd8"/><rect x="${tx}" y="${wY}" width="${tw}" height="${fillH}" fill="#93c5fd" opacity="0.65"/>${spark}<path d="${outline}" fill="none" stroke="${pp}" stroke-width="1.5"/><text x="${cx}" y="${bY+14}" text-anchor="middle" font-size="11" font-weight="700" fill="${dark}">${lbl}</text><text x="${cx}" y="${bY+28}" text-anchor="middle" font-size="11" font-weight="700" fill="${acc}">${sub}</text>`;};
+  const mixer=(cx,topY)=>`<circle cx="${cx}" cy="${topY-22}" r="15" fill="#e2e8f0" stroke="${pp}" stroke-width="1.5"/><text x="${cx}" y="${topY-17}" text-anchor="middle" font-size="11" font-weight="700" fill="${dark}">M</text><line x1="${cx}" y1="${topY-7}" x2="${cx}" y2="${topY+70}" stroke="${pp}" stroke-width="1.5"/><line x1="${cx-22}" y1="${topY+70}" x2="${cx+22}" y2="${topY+70}" stroke="${pp}" stroke-width="2" stroke-linecap="round"/>`;
+  const atX=300,atY=165,atW=165,atH=115,scX=644,scY=170,scW=130,scH=110,rasY=360,rasLX=264,rasRX=scX+(scW>>1);
+  let s=`<svg viewBox="0 0 1100 420" style="width:100%;height:auto;display:block"><rect width="1100" height="420" fill="#d4d0c8"/>`;
+  s+=LH(22,108,pY);s+=LH(152,200,pY);s+=LH(226,atX,pY);s+=LH(atX+atW,536,pY);s+=LH(580,scX,pY);s+=LH(scX+scW,838,pY);s+=LH(865,963,pY);s+=AR(22,pY);s+=AR(963,pY);
+  s+=LV(rasLX,pY,rasY,1.5,'#9ca3af');s+=LV(rasRX,pY,rasY,1.5,'#9ca3af');s+=LH(rasLX,rasRX,rasY,1.5,'#9ca3af');s+=AU(rasLX,pY+2);
+  const rPx=(rasLX+rasRX)>>1;s+=`<circle cx="${rPx}" cy="${rasY}" r="13" fill="#e2e8f0" stroke="#9ca3af" stroke-width="1.5"/><polygon points="${rPx-7},${rasY-5} ${rPx+9},${rasY} ${rPx-7},${rasY+5}" fill="#9ca3af"/><text x="${rPx}" y="${rasY-18}" text-anchor="middle" font-size="9" fill="${muted}">P-RAS</text>`;
+  s+=gauge(48,35,'FIT-101','438','m³/h','600',438/600,100);s+=gauge(atX+20,18,'AT-201','1.92','DO mg/L','6.0',1.92/6,85);s+=gauge(atX+atW-42,18,'AT-202','2.81','NH₄ mg/L','8.0',2.81/8,85);
+  s+=tank(atX,atY,atW,atH,0.65,'Aeration Basin','65%',doD);s+=tank(scX,scY,scW,scH,0.45,'Secondary Clarifier','45%');
+  s+=mixer(atX+(atW>>1),atY);
+  s+=pump(130,pY,'P-101','65% Running');s+=valve(213,pY,'V-101','80% Open');s+=pump(558,pY,'P-201','75% Running');s+=valve(852,pY,'V-301','60% Open');
+  s+=`<text x="22" y="${pY-16}" font-size="11" font-weight="700" fill="${dark}">Influent</text><text x="980" y="${pY-16}" font-size="11" font-weight="700" fill="${dark}">Effluent</text>`;
+  s+=`<rect x="808" y="14" width="142" height="36" fill="rgba(255,255,255,0.75)" stroke="#c8cfd8" stroke-width="1"/><text x="879" y="29" text-anchor="middle" font-size="9" font-weight="600" fill="${muted}">ENERGY</text><text x="879" y="44" text-anchor="middle" font-size="11" font-weight="700" fill="${acc}">152 kWh  ↑4%</text>`;
+  s+='</svg>';
+  let h=`<div style="padding:8px"><div class="scada-group"><div class="scada-group-title">Site 1 — WWTP North &nbsp;<span style="font-weight:400;opacity:.8;font-size:7px">50,000 PE</span></div><div class="scada-group-body">`;
+  h+=`<div class="scada-metrics"><div class="scada-metric"><div class="scada-metric-label">Flow Rate</div><div class="scada-metric-row"><span class="scada-metric-value">438</span><span class="scada-metric-unit">m³/h</span><span class="scada-metric-trend smt-dn">▼2%</span></div></div><div class="scada-metric"><div class="scada-metric-label">DO Zone 3</div><div class="scada-metric-row"><span class="scada-metric-value">1.92</span><span class="scada-metric-unit">mg/L</span><span class="scada-metric-trend smt-up">▲0.1</span></div></div><div class="scada-metric"><div class="scada-metric-label">NH₄-N Eff.</div><div class="scada-metric-row"><span class="scada-metric-value">2.81</span><span class="scada-metric-unit">mg/L</span><span class="scada-metric-trend smt-dn">▼0.3</span></div></div><div class="scada-metric"><div class="scada-metric-label">Energy</div><div class="scada-metric-row"><span class="scada-metric-value">152</span><span class="scada-metric-unit">kWh</span><span class="scada-metric-trend smt-up">▲4%</span></div></div></div>`;
+  h+=s;
+  h+=`<div class="scada-charts"><div class="scada-chart-box"><div class="scada-chart-label">Dissolved Oxygen — 48h <span>AT-201</span></div>${schrt(doD,'#00ff00',{yLabel:'mg/L'})}</div><div class="scada-chart-box"><div class="scada-chart-label">NH₄-N Effluent — 48h <span>AT-202</span></div>${schrt(nh4D,'#00cc44',{threshold:4,thresholdLabel:'consent limit'})}</div></div>`;
+  h+=`<div class="scada-blind"><div class="scada-blind-title"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><circle cx="12" cy="17" r="0.5"/></svg>DATA GAP: Sludge Volume Index (SVI)</div><div class="scada-blind-body"><strong>Last reading: 118 mL/g</strong> — sampled 5 days ago. No continuous monitoring.</div><div class="scada-blind-overlay"></div></div>`;
+  h+=`</div></div></div>`;
+  h+=`<div class="statusbar"><div class="statusbar-item"><span class="status-led led-green"></span>PLC Online</div><div class="statusbar-item"><span class="status-led led-green"></span>SCADA Link</div><div class="statusbar-item"><span class="status-led led-amber"></span>Biology: NO DATA</div><div class="statusbar-item">Alarms: 3 active</div></div>`;
+  document.getElementById('scada').innerHTML = h;
+}
+
+// ── Init ──
+renderSections();
+updateCollapsedAlertDot();
+</script>
+</body>
+</html>

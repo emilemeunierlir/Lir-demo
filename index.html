@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lir Labs — Demo</title>
+<style>
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-Light.otf') format('opentype'); font-weight:300; }
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-Regular.otf') format('opentype'); font-weight:400; }
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-Medium.otf') format('opentype'); font-weight:500; }
+@font-face { font-family:'Test Calibre'; src:url('fonts/TestCalibre-Semibold.otf') format('opentype'); font-weight:600; }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #dee3fb;
+  --dark:    #171025;
+  --purple:  #524d5a;
+  --card-bg: rgba(255,255,255,0.52);
+  --accent:  rgba(82,77,90,0.12);
+}
+
+body {
+  font-family: 'Test Calibre', system-ui, sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+/* Logo row */
+.logo-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+.logo-knob {
+  position: relative;
+  width: 48px;
+  height: 48px;
+}
+.logo-knob img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.logo-knob .lir-l {
+  transform: rotate(180deg);
+}
+.brand {
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--dark);
+  letter-spacing: -0.5px;
+}
+
+/* Tagline */
+.tagline {
+  font-size: 16px;
+  font-weight: 300;
+  color: var(--purple);
+  letter-spacing: -0.2px;
+  margin-bottom: 56px;
+  text-align: center;
+}
+
+/* Cards */
+.cards {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.demo-card {
+  text-decoration: none;
+  background: var(--card-bg);
+  border: 1px solid rgba(255,255,255,0.7);
+  border-radius: 24px;
+  width: 280px;
+  padding: 32px 28px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  backdrop-filter: blur(12px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.demo-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(82,77,90,0.15);
+}
+
+.card-icon {
+  width: 44px;
+  height: 44px;
+  background: var(--dark);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+.card-icon svg { display: block; }
+
+.card-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--purple);
+  opacity: 0.6;
+}
+.card-title {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--dark);
+  letter-spacing: -0.4px;
+  line-height: 1.15;
+}
+.card-desc {
+  font-size: 13.5px;
+  font-weight: 300;
+  color: var(--purple);
+  line-height: 1.5;
+  flex: 1;
+}
+.card-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dark);
+  margin-top: 8px;
+}
+.card-cta svg { transition: transform 0.2s ease; }
+.demo-card:hover .card-cta svg { transform: translateX(4px); }
+
+/* Footer */
+footer {
+  margin-top: 64px;
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--purple);
+  opacity: 0.5;
+  letter-spacing: 0.02em;
+}
+</style>
+</head>
+<body>
+
+<div class="logo-row">
+  <div class="logo-knob">
+    <img class="lir-l"   src="assets/mob-knob-bg.svg"  alt="" />
+    <img                 src="assets/mob-lir-logo.svg" alt="" />
+  </div>
+  <span class="brand">Lir Labs</span>
+</div>
+
+<p class="tagline">Operator Intelligence Platform — Interactive Demo</p>
+
+<div class="cards">
+
+  <!-- Desktop demo -->
+  <a class="demo-card" href="lir-demo-v4-desktop.html">
+    <div class="card-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.6">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <line x1="8" y1="21" x2="16" y2="21"/>
+        <line x1="12" y1="17" x2="12" y2="21"/>
+      </svg>
+    </div>
+    <span class="card-label">Dashboard</span>
+    <span class="card-title">Plant Manager<br>Interface</span>
+    <span class="card-desc">Full-screen overview with live alerts, AI recommendations, SCADA integration and collapsible plant sections.</span>
+    <span class="card-cta">
+      Open demo
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </span>
+  </a>
+
+  <!-- Mobile demo -->
+  <a class="demo-card" href="lir-demo-mobile.html">
+    <div class="card-icon">
+      <svg width="18" height="22" viewBox="0 0 18 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.6">
+        <rect x="1" y="1" width="16" height="22" rx="3"/>
+        <line x1="7" y1="20" x2="11" y2="20"/>
+      </svg>
+    </div>
+    <span class="card-label">Mobile App</span>
+    <span class="card-title">Operator<br>Field App</span>
+    <span class="card-desc">iOS operator app with AI Co-pilot chat, daily schedule tasks and real-time plant overview metrics.</span>
+    <span class="card-cta">
+      Open demo
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </span>
+  </a>
+
+</div>
+
+<footer>© 2026 Lir Labs — Confidential demo</footer>
+
+</body>
+</html>

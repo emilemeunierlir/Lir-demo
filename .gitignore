@@ -1,0 +1,13 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Old / draft versions
+lir-demo-v3.html
+lir-demo-v4-phone.html
+lir-demo-v4-workflow.md
+microscopy_images/
+
+# Editor
+.vscode/
+*.code-workspace
